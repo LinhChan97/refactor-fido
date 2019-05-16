@@ -42,7 +42,7 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        return $this->employeeService->create($request->all);
+        return $this->employeeService->create($request->all());
     }
 
     /**
@@ -76,7 +76,7 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        return $this->employeeService->update($request->all, $id);
+        return $this->employeeService->update($request->all(), $id);
     }
 
     /**

@@ -6,6 +6,9 @@ use App\Repositories\RepositoryInterface;
 use App\Models\Employee;
 use App\Library\MyValidation;
 use App\Http\Resources\EmployeeCollection;
+use App\User;
+use Validator;
+use App\Library\MyFunctions;
 
 class EmployeeRepository implements RepositoryInterface
 {
@@ -14,7 +17,7 @@ class EmployeeRepository implements RepositoryInterface
 
     // Constructor to bind model to repo
     public function __construct()
-    {
+    {   
         $this->model = new Employee();
     }
 
@@ -46,14 +49,15 @@ class EmployeeRepository implements RepositoryInterface
     // create a new record in the database
     public function create(array $data)
     {
-        if (DB::table('users')->where('email', $data['email'])->first()) {
+        if (User::where('email', $data['email'])->first()) {
             throw new \Exception('Email has been already taken!');
         }
-        $validator = Validator::make($data->all(), MyValidation::$ruleEmployee, MyValidation::$messageEmployee);
+        $validator = Validator::make($data, MyValidation::$ruleEmployee, MyValidation::$messageEmployee);
         if ($validator->fails()) {
             $message = $validator->messages()->getMessages();
-            throw new \Exception($message);
+            throw new \Exception(json_encode($message));
         }
+       
         $employee = $this->model->create($data);
         if ($employee) {
             User::create([
@@ -64,7 +68,7 @@ class EmployeeRepository implements RepositoryInterface
                 'usable_type' => 'App\\Employee',
                 'password' => 'default123'
             ]);
-            if ($avatar = $data->file('avatar')) {
+            if ($avatar = $data['avatar']) {
                 $imageURL = MyFunctions::upload_img($avatar);
                 $employee->avatar = $imageURL;
                 $employee->save();
@@ -79,7 +83,7 @@ class EmployeeRepository implements RepositoryInterface
         $employee = $this->model->findOrFail($id);
         if ($employee) {
             $employee->update($data);
-            if ($avatar = $data->file('avatar')) {
+            if ($avatar = $data['avatar']) {
                 $imageURL = MyFunctions::upload_img($avatar);
                 $employee->avatar = $imageURL;
                 $employee->save();
